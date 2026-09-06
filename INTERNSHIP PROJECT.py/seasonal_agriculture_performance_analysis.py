@@ -1,3 +1,4 @@
+#-----------------------LIBRARIES----------------------
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,7 +7,10 @@ import warnings
 warnings.filterwarnings('ignore')
 sns.set_theme(style="whitegrid")
 
+#--------------------------DATA LOADING--------------------
 df=pd.read_excel('INTERNSHIP PROJECT.py\\seasonal_agriculture_performance_dataset .csv.xlsx')
+
+#--------------------------DATA DESCRIPTION----------------
 print(df.head())
 print(df.tail())
 print(df.shape)
@@ -39,6 +43,7 @@ print(df.head(10))
 print("\nLast 10 Records:")
 print(df.tail(10))
 
+# ----------------DATA CLEANING-------------------------------
 # ============================================================
 # 4. CHECK MISSING VALUES
 # ============================================================
@@ -138,9 +143,381 @@ print("Number of Seasons:",
 print("Number of Irrigation Methods:",
       df["Irrigation_Method"].nunique())
 
+#----------------------ANALYSIS-------------------------------
+# ============================================================
+# SEASONAL AGRICULTURE PERFORMANCE ANALYSIS
+# ============================================================
+
+print("\n" + "=" * 80)
+print("SEASONAL AGRICULTURE PERFORMANCE ANALYSIS")
+print("=" * 80)
+
+
+# ------------------------------------------------------------
+# 1. NUMBER OF RECORDS IN EACH SEASON
+# ------------------------------------------------------------
+
+print("\n1. NUMBER OF FARMS IN EACH SEASON")
+print("-" * 60)
+
+season_count = df["Season"].value_counts()
+
+print(season_count)
+
+
+# ------------------------------------------------------------
+# 2. AGRICULTURAL PERFORMANCE ACROSS SEASONS
+# ------------------------------------------------------------
+
+print("\n2. AGRICULTURAL PERFORMANCE ACROSS SEASONS")
+print("-" * 60)
+
+season_performance = df.groupby("Season").agg(
+    Farms=("Farm_ID", "count"),
+    Average_Yield=("Yield_Tonnes_Ha", "mean"),
+    Total_Production=("Production_Tonnes", "sum"),
+    Average_Production=("Production_Tonnes", "mean"),
+    Total_Revenue=("Revenue_INR", "sum"),
+    Total_Cost=("Total_Cost_INR", "sum"),
+    Total_Profit=("Profit_INR", "sum"),
+    Average_Profit=("Profit_INR", "mean")
+).round(2)
+
+print(season_performance)
+
+
+# ------------------------------------------------------------
+# 3. MAJOR SEASONAL PATTERNS
+# ------------------------------------------------------------
+
+print("\n3. MAJOR SEASONAL PATTERNS")
+print("-" * 60)
+
+print("\nAverage Yield by Season:")
+print(
+    df.groupby("Season")["Yield_Tonnes_Ha"]
+    .mean()
+    .sort_values(ascending=False)
+    .round(2)
+)
+
+print("\nTotal Production by Season:")
+print(
+    df.groupby("Season")["Production_Tonnes"]
+    .sum()
+    .sort_values(ascending=False)
+    .round(2)
+)
+
+print("\nTotal Profit by Season:")
+print(
+    df.groupby("Season")["Profit_INR"]
+    .sum()
+    .sort_values(ascending=False)
+    .round(2)
+)
+
+
+# ------------------------------------------------------------
+# 4. CHARACTERISTICS CHANGING BETWEEN SEASONS
+# ------------------------------------------------------------
+
+print("\n4. CHARACTERISTICS CHANGING BETWEEN SEASONS")
+print("-" * 60)
+
+season_characteristics = df.groupby("Season").agg(
+    Average_Farm_Area=("Farm_Area_Hectares", "mean"),
+    Average_Rainfall=("Rainfall_mm", "mean"),
+    Average_Temperature=("Avg_Temperature_C", "mean"),
+    Average_Humidity=("Humidity_pct", "mean"),
+    Average_Soil_Moisture=("Soil_Moisture_pct", "mean"),
+    Average_Yield=("Yield_Tonnes_Ha", "mean"),
+    Average_Water_Usage=("Water_Used_m3", "mean"),
+    Average_Water_Efficiency=(
+        "Water_Efficiency_t_per_1000m3", "mean"
+    ),
+    Average_Disease_Pest_Risk=(
+        "Disease_Pest_Risk_pct", "mean"
+    )
+).round(2)
+
+print(season_characteristics)
+
+
+# ------------------------------------------------------------
+# 5. AGRICULTURAL ACTIVITIES IN DIFFERENT SEASONS
+# ------------------------------------------------------------
+
+print("\n5. AGRICULTURAL ACTIVITIES ACROSS SEASONS")
+print("-" * 60)
+
+print("\nCrop distribution by Season:")
+
+crop_season = pd.crosstab(
+    df["Season"],
+    df["Crop"]
+)
+
+print(crop_season)
+
+
+print("\nIrrigation Method by Season:")
+
+irrigation_season = pd.crosstab(
+    df["Season"],
+    df["Irrigation_Method"]
+)
+
+print(irrigation_season)
+
+
+# ------------------------------------------------------------
+# 6. RESOURCE USAGE ACROSS SEASONS
+# ------------------------------------------------------------
+
+print("\n6. RESOURCE USAGE VARIATION ACROSS SEASONS")
+print("-" * 60)
+
+resource_usage = df.groupby("Season").agg(
+    Average_Farm_Area=("Farm_Area_Hectares", "mean"),
+    Average_Rainfall=("Rainfall_mm", "mean"),
+    Average_Water_Used=("Water_Used_m3", "mean"),
+    Average_Water_Efficiency=(
+        "Water_Efficiency_t_per_1000m3", "mean"
+    ),
+    Average_Fertilizer=(
+        "Fertilizer_kg_ha", "mean"
+    ),
+    Average_Pesticide=(
+        "Pesticide_Litre_ha", "mean"
+    )
+).round(2)
+
+print(resource_usage)
+
+
+# ------------------------------------------------------------
+# 7. ENVIRONMENTAL CONDITIONS VS AGRICULTURAL PERFORMANCE
+# ------------------------------------------------------------
+
+print("\n7. ENVIRONMENTAL CONDITIONS VS AGRICULTURAL PERFORMANCE")
+print("-" * 60)
+
+environment_performance = df.groupby("Season").agg(
+    Rainfall=("Rainfall_mm", "mean"),
+    Temperature=("Avg_Temperature_C", "mean"),
+    Humidity=("Humidity_pct", "mean"),
+    Soil_Moisture=("Soil_Moisture_pct", "mean"),
+    Yield=("Yield_Tonnes_Ha", "mean"),
+    Production=("Production_Tonnes", "mean"),
+    Water_Efficiency=(
+        "Water_Efficiency_t_per_1000m3", "mean"
+    )
+).round(2)
+
+print(environment_performance)
+
+
+print("\nCorrelation Between Rainfall and Yield:")
+
+rainfall_yield_corr = df[
+    ["Rainfall_mm", "Yield_Tonnes_Ha"]
+].corr()
+
+print(rainfall_yield_corr.round(3))
+
+
+# ------------------------------------------------------------
+# 8. ECONOMIC OUTCOMES ACROSS SEASONS
+# ------------------------------------------------------------
+
+print("\n8. ECONOMIC OUTCOMES ACROSS SEASONS")
+print("-" * 60)
+
+# Calculate profit margin
+df["Profit_Margin_pct"] = np.where(
+    df["Revenue_INR"] != 0,
+    (df["Profit_INR"] / df["Revenue_INR"]) * 100,
+    np.nan
+)
+
+economic_analysis = df.groupby("Season").agg(
+    Total_Revenue=("Revenue_INR", "sum"),
+    Total_Cost=("Total_Cost_INR", "sum"),
+    Total_Profit=("Profit_INR", "sum"),
+    Average_Revenue=("Revenue_INR", "mean"),
+    Average_Cost=("Total_Cost_INR", "mean"),
+    Average_Profit=("Profit_INR", "mean"),
+    Average_Profit_Margin=("Profit_Margin_pct", "mean")
+).round(2)
+
+print(economic_analysis)
+
+
+# ------------------------------------------------------------
+# 9. SEASONAL PATTERNS ACROSS DIFFERENT STATES
+# ------------------------------------------------------------
+
+print("\n9. SEASONAL PATTERNS ACROSS REGIONS")
+print("-" * 60)
+
+state_season_profit = pd.pivot_table(
+    df,
+    values="Profit_INR",
+    index="State",
+    columns="Season",
+    aggfunc="mean"
+).round(2)
+
+print("\nAverage Profit by State and Season:")
+print(state_season_profit)
+
+
+print("\nAverage Yield by State and Season:")
+
+state_season_yield = pd.pivot_table(
+    df,
+    values="Yield_Tonnes_Ha",
+    index="State",
+    columns="Season",
+    aggfunc="mean"
+).round(2)
+
+print(state_season_yield)
+
+
+# ------------------------------------------------------------
+# 10. UNUSUAL / UNEXPECTED SEASONAL PATTERNS
+# ------------------------------------------------------------
+
+print("\n10. UNUSUAL OR UNEXPECTED SEASONAL PATTERNS")
+print("-" * 60)
+
+season_summary = df.groupby("Season").agg(
+    Average_Yield=("Yield_Tonnes_Ha", "mean"),
+    Average_Profit=("Profit_INR", "mean"),
+    Average_Rainfall=("Rainfall_mm", "mean"),
+    Average_Water_Usage=("Water_Used_m3", "mean"),
+    Average_Risk=("Disease_Pest_Risk_pct", "mean")
+).round(2)
+
+
+highest_yield_season = (
+    season_summary["Average_Yield"].idxmax()
+)
+
+lowest_yield_season = (
+    season_summary["Average_Yield"].idxmin()
+)
+
+highest_profit_season = (
+    season_summary["Average_Profit"].idxmax()
+)
+
+lowest_profit_season = (
+    season_summary["Average_Profit"].idxmin()
+)
+
+highest_rainfall_season = (
+    season_summary["Average_Rainfall"].idxmax()
+)
+
+lowest_rainfall_season = (
+    season_summary["Average_Rainfall"].idxmin()
+)
+
+highest_risk_season = (
+    season_summary["Average_Risk"].idxmax()
+)
+
+lowest_risk_season = (
+    season_summary["Average_Risk"].idxmin()
+)
+
+
+print("Highest Yield Season:", highest_yield_season)
+print("Lowest Yield Season:", lowest_yield_season)
+
+print("Highest Profit Season:", highest_profit_season)
+print("Lowest Profit Season:", lowest_profit_season)
+
+print("Highest Rainfall Season:", highest_rainfall_season)
+print("Lowest Rainfall Season:", lowest_rainfall_season)
+
+print("Highest Disease/Pest Risk Season:",
+      highest_risk_season)
+
+print("Lowest Disease/Pest Risk Season:",
+      lowest_risk_season)
+
+
+# ------------------------------------------------------------
+# 11. BEST AND WORST PERFORMING SEASON
+# ------------------------------------------------------------
+
+print("\n11. BEST AND WORST PERFORMING SEASONS")
+print("-" * 60)
+
+best_season = season_summary["Average_Profit"].idxmax()
+worst_season = season_summary["Average_Profit"].idxmin()
+
+print("Best Performing Season:", best_season)
+print("Worst Performing Season:", worst_season)
+
+
+# ------------------------------------------------------------
+# 12. BEST CROP IN EACH SEASON
+# ------------------------------------------------------------
+
+print("\n12. BEST PERFORMING CROP IN EACH SEASON")
+print("-" * 60)
+
+crop_season_profit = (
+    df.groupby(["Season", "Crop"])["Profit_INR"]
+    .mean()
+    .reset_index()
+)
+
+best_crop_each_season = (
+    crop_season_profit
+    .sort_values("Profit_INR", ascending=False)
+    .groupby("Season")
+    .head(1)
+)
+
+print(best_crop_each_season)
+
+
+# ------------------------------------------------------------
+# 13. BEST IRRIGATION METHOD IN EACH SEASON
+# ------------------------------------------------------------
+
+print("\n13. BEST IRRIGATION METHOD BY SEASON")
+print("-" * 60)
+
+irrigation_season_yield = (
+    df.groupby(
+        ["Season", "Irrigation_Method"]
+    )["Yield_Tonnes_Ha"]
+    .mean()
+    .reset_index()
+)
+
+best_irrigation_each_season = (
+    irrigation_season_yield
+    .sort_values(
+        "Yield_Tonnes_Ha",
+        ascending=False
+    )
+    .groupby("Season")
+    .head(1)
+)
+
+print(best_irrigation_each_season)
+
 
 # ============================================================
-# 8. CROP ANALYSIS
+# 14. CROP ANALYSIS
 # ============================================================
 
 print("\n========== CROP ANALYSIS ==========")
@@ -151,7 +528,7 @@ print(crop_count)
 
 
 # ============================================================
-# 9. SEASON ANALYSIS
+# 15. SEASON ANALYSIS
 # ============================================================
 
 print("\n========== SEASON ANALYSIS ==========")
@@ -162,7 +539,7 @@ print(season_count)
 
 
 # ============================================================
-# 10. IRRIGATION METHOD ANALYSIS
+# 16. IRRIGATION METHOD ANALYSIS
 # ============================================================
 
 print("\n========== IRRIGATION METHOD ==========")
@@ -176,7 +553,7 @@ print(irrigation_count)
 
 
 # ============================================================
-# 11. KPI / BUSINESS ANALYSIS
+# 17. KPI / BUSINESS ANALYSIS
 # ============================================================
 
 print("\n========== KEY PERFORMANCE INDICATORS ==========")
@@ -251,7 +628,7 @@ print(
 
 
 # ============================================================
-# 12. PROFIT MARGIN
+# 16. PROFIT MARGIN
 # ============================================================
 
 df["Profit_Margin_pct"] = (
@@ -272,7 +649,7 @@ print(
 
 
 # ============================================================
-# 13. CROP-WISE ANALYSIS
+# 17. CROP-WISE ANALYSIS
 # ============================================================
 
 crop_analysis = (
@@ -296,7 +673,7 @@ print(crop_analysis)
 
 
 # ============================================================
-# 14. SEASON-WISE ANALYSIS
+# 18. SEASON-WISE ANALYSIS
 # ============================================================
 
 season_analysis = (
@@ -320,7 +697,7 @@ print(season_analysis)
 
 
 # ============================================================
-# 15. IRRIGATION-WISE ANALYSIS
+# 19. IRRIGATION-WISE ANALYSIS
 # ============================================================
 
 irrigation_analysis = (
@@ -346,7 +723,7 @@ print(irrigation_analysis)
 
 
 # ============================================================
-# 16. STATE-WISE ANALYSIS
+# 20. STATE-WISE ANALYSIS
 # ============================================================
 
 state_analysis = (
@@ -370,7 +747,7 @@ print(state_analysis.head(10))
 
 
 # ============================================================
-# 17. TOP 10 MOST PROFITABLE FARMS
+# 21. TOP 10 MOST PROFITABLE FARMS
 # ============================================================
 
 top_farms = (
@@ -396,9 +773,9 @@ print("\n========== TOP 10 PROFITABLE FARMS ==========")
 
 print(top_farms.to_string(index=False))
 
-
+#---------------VISUALIZATION-------------------------------
 # ============================================================
-# 18. VISUALIZATION 1
+# 1. VISUALIZATION 1
 # NUMBER OF FARMS BY CROP
 # ============================================================
 
@@ -419,7 +796,7 @@ plt.show()
 
 
 # ============================================================
-# 19. VISUALIZATION 2
+# 2. VISUALIZATION 2
 # AVERAGE YIELD BY CROP
 # ============================================================
 
@@ -445,7 +822,7 @@ plt.show()
 
 
 # ============================================================
-# 20. VISUALIZATION 3
+# 3. VISUALIZATION 3
 # TOTAL PROFIT BY CROP
 # ============================================================
 
@@ -471,7 +848,7 @@ plt.show()
 
 
 # ============================================================
-# 21. VISUALIZATION 4
+# 4. VISUALIZATION 4
 # PROFIT BY SEASON
 # ============================================================
 
@@ -499,7 +876,7 @@ plt.show()
 
 
 # ============================================================
-# 22. VISUALIZATION 5
+# 5. VISUALIZATION 5
 # IRRIGATION METHOD VS YIELD
 # ============================================================
 
@@ -522,7 +899,7 @@ plt.show()
 
 
 # ============================================================
-# 23. VISUALIZATION 6
+# 6. VISUALIZATION 6
 # RAINFALL VS YIELD
 # ============================================================
 
@@ -544,7 +921,7 @@ plt.show()
 
 
 # ============================================================
-# 24. VISUALIZATION 7
+# 7. VISUALIZATION 7
 # FUNDING / COST VS PROFIT
 # ============================================================
 
@@ -566,7 +943,7 @@ plt.show()
 
 
 # ============================================================
-# 25. VISUALIZATION 8
+# 8. VISUALIZATION 8
 # PROFIT DISTRIBUTION
 # ============================================================
 
@@ -587,7 +964,7 @@ plt.show()
 
 
 # ============================================================
-# 26. VISUALIZATION 9
+# 9. VISUALIZATION 9
 # DISEASE / PEST RISK BY CROP
 # ============================================================
 
@@ -613,7 +990,7 @@ plt.show()
 
 
 # ============================================================
-# 27. VISUALIZATION 10
+# 10. VISUALIZATION 10
 # CORRELATION HEATMAP
 # ============================================================
 
@@ -638,7 +1015,7 @@ plt.show()
 
 
 # ============================================================
-# 28. SAVE CLEANED DATA
+# 11. SAVE CLEANED DATA
 # ============================================================
 
 df.to_excel(
@@ -655,7 +1032,7 @@ print(
 
 
 # ============================================================
-# 29. FINAL SUMMARY
+# 12. FINAL SUMMARY
 # ============================================================
 
 print("\n========== FINAL SUMMARY ==========")
